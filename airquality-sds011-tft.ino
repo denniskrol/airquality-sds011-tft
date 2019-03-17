@@ -5,16 +5,6 @@
 #include <TimeLib.h>
 #include <SDS011.h>
 
-// Assign human-readable names to some common 16-bit color values:
-#define BLACK   0x0000
-#define BLUE    0x001F
-#define RED     0xF800
-#define GREEN   0x07E0
-#define CYAN    0x07FF
-#define MAGENTA 0xF81F
-#define YELLOW  0xFFE0
-#define WHITE   0xFFFF
-
 #define AQI_GREEN 0x04CC
 #define AQI_YELLOW 0xFEE6
 #define AQI_ORANGE 0xFCC6
@@ -25,13 +15,18 @@
 MCUFRIEND_kbv tft;
 SDS011 sds011;
 
-const int tftWidth = tft.width();
-const int tftHeight = tft.height();
-int dataArray[241]; // My display is 240 pixels wide
+//int tftWidth = tft.width();
+//int tft.height() = tft.height();
+int dataArray[321]; // My display is 240 pixels wide
 
 int sds011Rx = 12;
 int sds011Tx = 11;
 int sds011Error;
+
+int fanPin = 10;    // LED connected to digital pin 9
+int fanMinValue = 125;
+int fanMaxValue = 225;
+int fanValue = 0;
 
 bool haveData = false;
 int sleepTime = 5000; // Sleep 15 seconds between measurements
@@ -57,24 +52,28 @@ int averagePm25AQISum = 0;
 int averageAQIDivider = 0;
 
 void setup() {
+    Serial.begin(9600);
+    //uint16_t identifier = tft.readID();
+    //Serial.println(identifier, HEX);
     tft.begin(tft.readID());
+    tft.setRotation(3);
 
     // Whiteout whole screen
-    tft.fillScreen(WHITE);
+    tft.fillScreen(TFT_BLACK);
   
     // Blackout graph part of screen
-    tft.fillRect(0, (tftHeight / 2), tftWidth, tftHeight, BLACK);
+    //tft.fillRect(0, (tft.height() / 3), tft.width(), tft.height(), TFT_BLACK);
     
     //tft.setTextSize(4);
   
     // Zerofill the array
-    for (int i = 0; i <= (tftWidth - 1); i++) {
+    for (int i = 0; i <= (tft.width() - 1); i++) {
         dataArray[i] = 0;
     }
     
     sds011.begin(sds011Rx, sds011Tx);
     
-    Serial.begin(9600);
+    
     Serial.println("Starting SDS011...");
     
     average1MinStart = now();
@@ -108,45 +107,46 @@ void drawAqiLine(int x, int aqi) {
     if (aqi > 400) {
         aqi = 400;
     }
+    
     int yOffset = 0;
     
     // Draw green
-    int drawHeight = map(aqi, 0, 400, 0, (tftHeight / 2));
-    int y = ((tftHeight - drawHeight) - yOffset);
+    int drawHeight = map(aqi, 0, 400, 0, ((tft.height() / 3) * 2));
+    int y = ((tft.height() - drawHeight) - yOffset);
     tft.drawFastVLine(x, y, drawHeight, AQI_GREEN);
 
     if (aqi > 50) {
-      yOffset = map(50, 0, 400, 0, (tftHeight / 2));
-      int drawHeight = map((aqi - 50), 0, 400, 0, (tftHeight / 2));
-      int y = ((tftHeight - drawHeight) - yOffset);
+      yOffset = map(50, 0, 400, 0, ((tft.height() / 3) * 2));
+      int drawHeight = map((aqi - 50), 0, 400, 0, ((tft.height() / 3) * 2));
+      int y = ((tft.height() - drawHeight) - yOffset);
       
       tft.drawFastVLine(x, y, drawHeight, AQI_YELLOW);
     }
     if (aqi > 100) {
-      yOffset = map(100, 0, 400, 0, (tftHeight / 2));
-      int drawHeight = map((aqi - 100), 0, 400, 0, (tftHeight / 2));
-      int y = ((tftHeight - drawHeight) - yOffset);
+      yOffset = map(100, 0, 400, 0, ((tft.height() / 3) * 2));
+      int drawHeight = map((aqi - 100), 0, 400, 0, ((tft.height() / 3) * 2));
+      int y = ((tft.height() - drawHeight) - yOffset);
       
       tft.drawFastVLine(x, y, drawHeight, AQI_ORANGE);
     }
     if (aqi > 150) {
-      yOffset = map(150, 0, 400, 0, (tftHeight / 2));
-      int drawHeight = map((aqi - 150), 0, 400, 0, (tftHeight / 2));
-      int y = ((tftHeight - drawHeight) - yOffset);
+      yOffset = map(150, 0, 400, 0, ((tft.height() / 3) * 2));
+      int drawHeight = map((aqi - 150), 0, 400, 0, ((tft.height() / 3) * 2));
+      int y = ((tft.height() - drawHeight) - yOffset);
       
       tft.drawFastVLine(x, y, drawHeight, AQI_RED);
     }
     if (aqi > 200) {
-      yOffset = map(200, 0, 400, 0, (tftHeight / 2));
-      int drawHeight = map((aqi - 200), 0, 400, 0, (tftHeight / 2));
-      int y = ((tftHeight - drawHeight) - yOffset);
+      yOffset = map(200, 0, 400, 0, ((tft.height() / 3) * 2));
+      int drawHeight = map((aqi - 200), 0, 400, 0, ((tft.height() / 3) * 2));
+      int y = ((tft.height() - drawHeight) - yOffset);
       
       tft.drawFastVLine(x, y, drawHeight, AQI_PURPLE);
     }
     if (aqi > 300) {
-      yOffset = map(300, 0, 400, 0, (tftHeight / 2));
-      int drawHeight = map((aqi - 300), 0, 400, 0, (tftHeight / 2));
-      int y = ((tftHeight - drawHeight) - yOffset);
+      yOffset = map(300, 0, 400, 0, ((tft.height() / 3) * 2));
+      int drawHeight = map((aqi - 300), 0, 400, 0, ((tft.height() / 3) * 2));
+      int y = ((tft.height() - drawHeight) - yOffset);
       
       tft.drawFastVLine(x, y, drawHeight, AQI_DARKRED);
     }
@@ -171,6 +171,7 @@ float getAverageDustDensity() {
             pm25Average1MinValue = pm25CurrentValue;
             pm10Average1MinValue = pm10CurrentValue;
             updateDisplay();
+            setFanspeed(pm25DustDensityToAQI(pm25Average1MinValue));
 
             haveData = true;
         }
@@ -185,6 +186,7 @@ float getAverageDustDensity() {
         Serial.println("Average 1 min PM10:  " + String(pm10DustDensityToAQI(pm10Average1MinValue)) + " (" + String(pm10Average1MinValue) + ")");
 
         updateDisplay();
+        setFanspeed(pm25DustDensityToAQI(pm25Average1MinValue));
         
         average1MinStart = now();
         pm25Average1MinSum = 0;
@@ -224,23 +226,23 @@ float pm25DustDensityToAQI(float density) {
 }
 
 void printPm10Aqi(int aqi) {
-    tft.fillRect((tftWidth / 2), 0, tftWidth, (tftHeight / 2), aqiColour(aqi));
-    tft.drawFastVLine(((tftWidth / 2) + 1), 0, (tftHeight / 2), BLACK);
-    tft.setTextColor(BLACK, aqiColour(aqi));
+    tft.fillRect((tft.width() / 2), 0, tft.width(), (tft.height() / 3), aqiColour(aqi));
+    tft.drawFastVLine(((tft.width() / 2) + 1), 0, (tft.height() / 3), TFT_BLACK);
+    tft.setTextColor(TFT_BLACK, aqiColour(aqi));
     
     tft.setTextSize(2);
-    tft.setCursor(((tftWidth / 2) + 10), 10);
+    tft.setCursor(((tft.width() / 2) + 10), 10);
     tft.println("PM10");
     
     tft.setTextSize(4);
-    tft.setCursor(((tftWidth / 2) + 10), 40);
+    tft.setCursor(((tft.width() / 2) + 10), 40);
     tft.println(aqi);
 }
 
 void printPm25Aqi(int aqi) {
-    tft.fillRect(0, 0, (tftWidth / 2), (tftHeight / 2), aqiColour(aqi));
-    tft.drawFastVLine((tftWidth / 2), 0, (tftHeight / 2), BLACK);
-    tft.setTextColor(BLACK, aqiColour(aqi));
+    tft.fillRect(0, 0, (tft.width() / 2), (tft.height() / 3), aqiColour(aqi));
+    tft.drawFastVLine((tft.width() / 2), 0, (tft.height() / 3), TFT_BLACK);
+    tft.setTextColor(TFT_BLACK, aqiColour(aqi));
 
     tft.setTextSize(2);
     tft.setCursor(10, 10);
@@ -251,6 +253,27 @@ void printPm25Aqi(int aqi) {
     tft.println(aqi);
 }
 
+void setFanspeed(int aqi) {
+  if (aqi < 50) {
+    fanValue = 0;
+  }
+  else if (aqi < 100) {
+    fanValue = 125;
+  }
+  else if(aqi < 150) {
+    fanValue = 150;
+  }
+  else if(aqi < 200) {
+    fanValue = 175;
+  }
+  else {
+    fanValue = fanMaxValue;
+  }
+
+  analogWrite(fanPin, fanValue);
+  Serial.println("Set fanspeed to " + String(fanValue));
+}
+
 void updateDisplay() {
     printPm10Aqi((int)round(pm10DustDensityToAQI(pm10Average1MinValue)));
     printPm25Aqi((int)round(pm25DustDensityToAQI(pm25Average1MinValue)));
@@ -259,19 +282,19 @@ void updateDisplay() {
     dataArray[0] = (int)round(pm25DustDensityToAQI(pm25Average1MinValue));
 
     // Clear graph part of screen
-    tft.fillRect(0, (tftHeight / 2), tftWidth, tftHeight, BLACK);
+    tft.fillRect(0, (tft.height() / 3), tft.width(), tft.height(), TFT_BLACK);
     
     // Draw lines
-    for (int i = 1; i <= tftWidth; i++ ) {
+    for (int i = 1; i <= tft.width(); i++ ) {
         if (dataArray[(i - 1)] > 0) {
-            drawAqiLine((tftWidth - i), dataArray[(i - 1)]);
+            drawAqiLine((tft.width() - i), dataArray[(i - 1)]);
         }
     }
  
     // Within the array, shift elements to the right by one step, by copying the adjacent 
     // values found on the left of each element. Start the copying process 
     // from the right(last) element of the array Leave the first element intact
-    for (int i = tftWidth; i >= 2; i--) {
+    for (int i = tft.width(); i >= 2; i--) {
         dataArray[(i - 1)] = dataArray[(i - 2)];
     }
 }
