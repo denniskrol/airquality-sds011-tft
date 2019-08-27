@@ -15,21 +15,19 @@
 MCUFRIEND_kbv tft;
 SDS011 sds011;
 
-//int tftWidth = tft.width();
-//int tft.height() = tft.height();
-int dataArray[321]; // My display is 240 pixels wide
+int dataArray[321]; // My display is 320 pixels wide
 
 int sds011Rx = 12;
 int sds011Tx = 11;
 int sds011Error;
 
-int fanPin = 10;    // LED connected to digital pin 9
+int fanPin = 10;
 int fanMinValue = 125;
-int fanMaxValue = 225;
+int fanMaxValue = 200;
 int fanValue = 0;
 
 bool haveData = false;
-int sleepTime = 5000; // Sleep 15 seconds between measurements
+int sleepTime = 5000; // Sleep 5 seconds between measurements
 
 float pm25CurrentValue, pm25Average1MinValue, pm25Average1MinSum;
 float pm10CurrentValue, pm10Average1MinValue, pm10Average1MinSum;
@@ -254,16 +252,16 @@ void printPm25Aqi(int aqi) {
 }
 
 void setFanspeed(int aqi) {
-  if (aqi < 50) {
+  if (aqi <= 50) {
     fanValue = 0;
   }
-  else if (aqi < 100) {
-    fanValue = 125;
+  else if (aqi <= 100) {
+    fanValue = fanMinValue;
   }
-  else if(aqi < 150) {
+  else if(aqi <= 150) {
     fanValue = 150;
   }
-  else if(aqi < 200) {
+  else if(aqi <= 200) {
     fanValue = 175;
   }
   else {
