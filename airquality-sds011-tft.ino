@@ -23,7 +23,7 @@ int sds011Error;
 
 int fanPin = 10;
 int fanMinValue = 125;
-int fanMaxValue = 200;
+int fanMaxValue = 175;
 int fanValue = 0;
 
 bool haveData = false;
@@ -252,19 +252,16 @@ void printPm25Aqi(int aqi) {
 }
 
 void setFanspeed(int aqi) {
-  if (aqi <= 50) {
+  if (aqi < 75) {
     fanValue = 0;
   }
-  else if (aqi <= 100) {
+  else if (aqi >= 75) {
     fanValue = fanMinValue;
   }
-  else if(aqi <= 150) {
+  else if(aqi >= 150) {
     fanValue = 150;
   }
-  else if(aqi <= 200) {
-    fanValue = 175;
-  }
-  else {
+  else if(aqi >= 200) {
     fanValue = fanMaxValue;
   }
 
