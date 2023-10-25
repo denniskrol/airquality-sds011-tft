@@ -22,9 +22,9 @@ int sds011Tx = 11;
 int sds011Error;
 
 int fanPin = 10;
-int fanMinValue = 125;
-int fanMaxValue = 200;
-int fanValue = 0;
+int fanMinValue = 150;
+int fanMaxValue = 250;
+float fanMultiplier = 1.5;
 
 bool haveData = false;
 int sleepTime = 5000; // Sleep 5 seconds between measurements
@@ -51,28 +51,25 @@ int averageAQIDivider = 0;
 
 void setup() {
     Serial.begin(9600);
-    //uint16_t identifier = tft.readID();
-    //Serial.println(identifier, HEX);
+    Serial.println();
+    uint16_t identifier = tft.readID();
+    Serial.print("Detected display ID ");
+    Serial.println(identifier, HEX);
+    // Make sure the MCUFRIEND_kbv supports the display
+    // And that support for the display is not commented out in MCUFRIEND_kbv.cpp
     tft.begin(tft.readID());
     tft.setRotation(3);
 
-    // Whiteout whole screen
+    // Blackout whole screen
     tft.fillScreen(TFT_BLACK);
-  
-    // Blackout graph part of screen
-    //tft.fillRect(0, (tft.height() / 3), tft.width(), tft.height(), TFT_BLACK);
-    
-    //tft.setTextSize(4);
   
     // Zerofill the array
     for (int i = 0; i <= (tft.width() - 1); i++) {
         dataArray[i] = 0;
     }
-    
-    sds011.begin(sds011Rx, sds011Tx);
-    
-    
+
     Serial.println("Starting SDS011...");
+    sds011.begin(sds011Rx, sds011Tx);
     
     average1MinStart = now();
 }
@@ -252,16 +249,12 @@ void printPm25Aqi(int aqi) {
 }
 
 void setFanspeed(int aqi) {
-  if (aqi < 75) {
-    fanValue = 0;
-  }
-  if (aqi >= 75) {
+  int fanValue = (aqi * fanMultiplier);
+
+  if (fanValue < fanMinValue) {
     fanValue = fanMinValue;
   }
-  if (aqi >= 150) {
-    fanValue = 150;
-  }
-  if (aqi >= 200) {
+  if (fanValue > fanMaxValue) {
     fanValue = fanMaxValue;
   }
 
